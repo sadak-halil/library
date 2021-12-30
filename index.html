@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <title>Playground</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+  </head>
+
+  <body>
+    <!-- Trigger/Open The Modal -->
+    <button id="addBookBtn">Add Book</button>
+
+    <!-- The Modal -->
+    <div id="addBookForm" class="modal">
+
+      <!-- Modal content -->
+      <div class="modal-content">
+        <span class="close">&times;</span>
+          <form class="formContainer">
+            <h2>Add new Book</h2>
+            <label for="title">
+              <strong>Title</strong>
+            </label>
+            <input type="text" id="title" name="title" required>
+            <label for="title">
+              <strong>Author</strong>
+            </label>
+            <input type="text" id="author" name="author" required>
+            <label for="pages">
+              <strong>Pages</strong>
+            </label>
+            <input type="text" id="pages" name="pages" required>
+            <label for="read">
+              <strong>I have read this book</strong>
+            </label>
+            <input type="checkbox" id="read" name="read">
+            <br>
+            <br>
+            <button type="button" class="btn" onclick="addBook()">Add</button>
+            <button type="button" class="btn cancel" onclick="closeForm()">Cancel</button>
+          </form>
+      </div>
+
+    </div>
+    
+  </body>
+
+</html>

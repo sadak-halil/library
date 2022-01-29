@@ -1,162 +1,133 @@
 'use strict'
 //book object constructor
-function book (id, title, author, pages, read){
-    this.id = id;
-    this.Title = title;
-    this.Author = author;
-    this.Pages = pages;
-    this.Read = read;
-}
-
-book.prototype.readStatusChange = function(){
-    if (this.Read === false){
-        this.Read = true;
-        console.log('changed to true')
-        return;
+class book {
+    constructor (id, title, author, pages, read){
+        this.id = id;
+        this.Title = title;
+        this.Author = author;
+        this.Pages = pages;
+        this.Read = read;
     }
-        this.Read = false;
-        console.log('changed to false');
-        return;
+
+    readStatusChange = () => {
+        this.Read ? this.Read = false : this.Read = true; 
+    }
+
 }
 
-//initiate the array to hold all books
-let myLibrary = [];
+class library {
 
-function addBookToLibrary(book){
-myLibrary.push(book);
+    books = [];
+
+    addBook(book) {
+        this.books.push(book);
+    }
+
+    //function to update the book IDs in the array when a book is deleted.
+    //In that way the ID will correspond to the index in the array and the 
+    //deletion and changing of read status could work properly
+    updateIds(){
+        this.books.forEach((book, index) => {
+            book.id = index;
+        });
+    }
+
 }
 
-let book1 = new book(0, "The Lord of the rings", "J.R.R. Tolkien", 1000, true);
-let book2 = new book(1, "One Flew Over the Cuckoo's Nest", "Ken Kesey", 200,true);
-let book3 = new book(2,"Test Book", "Test Author", 0, false);
-addBookToLibrary(book1);
-addBookToLibrary(book2);
-addBookToLibrary(book3);
+//initiate the array and add some books
+let myLibrary = new library;
 
-//create an empty placeholder book to generate the table headers
-const placeholderBook = new book();
+myLibrary.addBook(new book(0, "The Lord of the rings", "J.R.R. Tolkien", 1000, true));
+myLibrary.addBook(new book(1, "One Flew Over the Cuckoo's Nest", "Ken Kesey", 200,true));
+myLibrary.addBook(new book(2,"Test Book", "Test Author", 0, false));
 
-const body = document.getElementsByTagName('body')[0];
-const table = document.createElement('table'); //table element
+const displayController = (() => {
+    //create an empty placeholder book to generate the table headers
+    const tableHeaderTitles = new book();
+    const body = document.getElementsByTagName('body')[0];
+    const table = document.createElement('table'); //table element
+    body.appendChild(table);//add the table to the body
 
-function createTable(){
-    const tblHeader = table.createTHead();//create header in the table
-    const tblBody = table.createTBody();//create table body
-    const hRow = tblHeader.insertRow(0);//create one row in the header
-    for (const property in placeholderBook){//generate the header cells with own proprties only(inherited ones will be skipped)
-        if (placeholderBook.hasOwnProperty(property)){
-            if (property === 'id') {continue}//keep the id hidden
-            let cell = hRow.insertCell();
-            if (property === 'Read'){
-                cell.innerText = 'Read?'
-                continue;
-            }
-            cell.innerText = property;
+    const createTable = () => {
+        const tblHeader = table.createTHead();//create header in the table
+        table.createTBody();//create table body
+        const hRow = tblHeader.insertRow(0);//create one row in the header
+        for (const property in tableHeaderTitles){
+                if (property === 'id' || property === 'readStatusChange') {continue}//keep the class' 'id' property and the method hidden 
+                let cell = hRow.insertCell();
+                if (property === 'Read'){
+                    cell.innerText = 'Read?'//for better user understanding puproses
+                    continue;
+                }
+                cell.innerText = property;
         }
+        const cell = hRow.insertCell();
+        cell.innerText = 'Delete?'//add a row for the delete button
+        updateBooks();//add the books
     }
-    const cell = hRow.insertCell();
-    cell.innerText = 'Delete?'//add a row for the delete button
-}
 
-createTable();
-
-body.appendChild(table);//add the table to the body
-
-const tblBody = document.getElementsByTagName('tbody')[0];
-
-// add books to the table body, one at each line
-function updateBookTable(){
-    tblBody.innerHTML = "";//clears the table body otherwise it will just grow the table exponentially when you call the function
-    myLibrary.forEach((book) =>{
-        let newRow = tblBody.insertRow();
-        newRow.dataset.value = book.id;
-        for (const property in book){
-            if (book.hasOwnProperty(property)){
-                if (property === 'id'){continue}//do not display the ids
+    // add books to the table body, one at each line
+    const updateBooks = () => {
+        const tblBody = document.getElementsByTagName('tbody')[0];
+        tblBody.innerHTML = "";//clears the table body otherwise it will just grow the table exponentially when you call the function
+        myLibrary.books.forEach((book) =>{
+            let newRow = tblBody.insertRow();
+            newRow.dataset.value = book.id;
+            for (const property in book){
+                if (property === 'id' || property === 'readStatusChange'){continue}//do not display the ids and the method
                 let cell = newRow.insertCell();
                 if (property === 'Read'){
                     const checkbox = document.createElement("input");
                     checkbox.type = "checkbox";
                     checkbox.className = "readCheckbox";
                     checkbox.dataset.value = book.id;
-                    const checkedCheckbox = document.createElement("input");
-                    checkedCheckbox.type = "checkbox";
-                    checkedCheckbox.className = "readCheckbox";
-                    checkedCheckbox.dataset.value = book.id;
-                    checkedCheckbox.checked = true;
-                    book[property] ? (cell.appendChild(checkedCheckbox)) : (cell.appendChild(checkbox));
-                    continue; 
+                    book[property] ? checkbox.checked = true : checkbox.checked = false;
+                    checkbox.addEventListener('click', event => {myLibrary.books[event.target.dataset.value].readStatusChange()});//get the book by its id and change its 'Read' attribute
+                    cell.appendChild(checkbox);
+                    continue;
                 }
                 cell.innerText = book[property];
             }
-        }
-        let deleteBtn = document.createElement('button');
-        deleteBtn.className = "material-icons";
-        deleteBtn.textContent = "delete";
-        deleteBtn.dataset.value = book.id;
-        deleteBtn.onclick = function deleteBook(){
-            myLibrary.splice(newRow.dataset.value, 1);
-            updateIds(myLibrary);
-            updateBookTable();
-        }
-        const cell = newRow.insertCell();
-        cell.appendChild(deleteBtn)
-        }
-    )
-    readCheckbox();//add evnet listeners to the checkboxes after recreating the table
-};
-
-updateBookTable();
-
-function readCheckbox(){
-    document.querySelectorAll('.readCheckbox').forEach(item => {
-    item.addEventListener('click', event => {
-        myLibrary[event.target.dataset.value].readStatusChange();//get the book by its id and change its 'read' attribute
-    });
-});
-};
-
-readCheckbox();
+            let deleteBtn = document.createElement('button');
+            deleteBtn.className = "material-icons";
+            deleteBtn.textContent = "delete";
+            deleteBtn.dataset.value = book.id;
+            deleteBtn.onclick = function deleteBook(){
+                myLibrary.books.splice(newRow.dataset.value, 1);
+                myLibrary.updateIds();
+                updateBooks();
+            }
+            const cell = newRow.insertCell();
+            cell.appendChild(deleteBtn);
+            }
+        )
+    };
 
 // Get the modal
 const modal = document.getElementById("addBookForm");
 
-// Get the button that opens the modal
-const btn = document.getElementById("addBookBtn");
+// the button that opens the modal
+document.getElementById("addBookBtn").onclick = () => {modal.style.display = "block"};
 
-// Get the <span> element that closes the modal
-const span = document.getElementsByClassName("close")[0];
+// Cancel closes the modal and resets the form
+document.getElementsByClassName("btncancel")[0].onclick = () =>{closeModal()};
 
-//Get the form
-const form = document.getElementsByClassName("formContainer")[0];
-
-// When the user clicks on the button, open the modal 
-btn.onclick = function() {
-  modal.style.display = "block";
-}
-
-// When the user clicks on <span> (x), close the modal
-span.onclick = function() {
-  modal.style.display = "none";
-  form.reset();
-}
-
-//When the user clicks Close, close the modal
-function closeForm(){
-    modal.style.display = "none";
-    form.reset();
-}
+// Clicking the <span> element closes the modal and resets the form
+document.getElementsByClassName("close")[0].onclick = () =>{closeModal()};
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function(event) {
-  if (event.target == modal) {
-    modal.style.display = "none";
-    form.reset();
-  }
+  if (event.target == modal) {closeModal()}
 }
 
-function addBook(){
-    const id = myLibrary.length;
+const closeModal = () => {
+    modal.style.display = "none";
+    document.getElementsByClassName("formContainer")[0].reset(); //resets the form when closing
+}
+
+//add button in the modal function
+document.getElementsByClassName("btn")[0].onclick = () =>{
+    const id = myLibrary.books.length;
     const title = document.getElementById('title').value;
     const author = document.getElementById('author').value;
     const pages = document.getElementById('pages').value;
@@ -164,18 +135,13 @@ function addBook(){
     if(document.getElementById('read').checked){
         read = true;
     };
-    const newBook = new book(id, title, author, pages, read);
-    addBookToLibrary(newBook);
-    modal.style.display ="none";//close the modal
-    form.reset();//reset the form
-    updateBookTable();//recreate the table
+    myLibrary.addBook(new book(id, title, author, pages, read));
+    closeModal()
+    updateBooks();//recreate the table
 }
 
-//function to update the book IDs in the array when a book is deleted.
-//In that way the ID will correspond to the index in the array and the 
-//deletion and changing of read status could work properly
-function updateIds(myLibrary){
-    myLibrary.forEach((item, index) => {
-        item.id = index;
-    });
-}
+return {createTable, updateBooks};
+
+})();
+
+displayController.createTable();
